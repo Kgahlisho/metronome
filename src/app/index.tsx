@@ -1,12 +1,13 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { togglePlayback, usePlayback } from "../audio/engine";
+import { stopMetronome, togglePlayback, usePlayback } from "../audio/engine";
 import { BeatRow } from "../components/BeatRow";
 import { Button } from "../components/Button";
 import { Pulse } from "../components/Pulse";
 import { Segmented } from "../components/Segmented";
 import { TempoControl } from "../components/TempoControl";
 import { colors, spacing } from "../lib/theme";
+import { expandOverlay } from "../store/overlay";
 import { TIME_SIGNATURES, useSettings } from "../store/settings";
 
 export default function PlayScreen() {
@@ -24,9 +25,6 @@ export default function PlayScreen() {
         t.pattern.length === pattern.length &&
         t.pattern.every((a, i) => a === pattern[i]),
     )?.label ?? null;
-
-  const label =
-    state === "running" ? "Stop" : state === "paused" ? "Resume" : "Start";
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -49,9 +47,9 @@ export default function PlayScreen() {
             }))}
             value={currentSig}
             onChange={(v) =>
-              setPattern(
-                [...(TIME_SIGNATURES.find((t) => t.label === v)?.pattern ?? [])],
-              )
+              setPattern([
+                ...(TIME_SIGNATURES.find((t) => t.label === v)?.pattern ?? []),
+              ])
             }
           />
         </View>
@@ -85,15 +83,42 @@ export default function PlayScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <Button
-          label={label}
-          variant={state === "running" ? "danger" : "primary"}
-          accessibilityHint={
-            state === "running" ? "Stops the metronome" : "Starts the metronome"
-          }
-          onPress={togglePlayback}
-          style={styles.playButton}
-        />
+        {state === "stopped" ? (
+          <Button
+            label="Start"
+            variant="primary"
+            accessibilityHint="Starts the metronome"
+            onPress={togglePlayback}
+            style={styles.footerButton}
+          />
+        ) : (
+          // Once the beat has started: Stop is always here on the home screen.
+          <View style={styles.footerRow}>
+            {state === "running" ? (
+              <Button
+                label="Beat view"
+                accessibilityHint="Opens the full-screen beat view"
+                onPress={expandOverlay}
+                style={styles.footerButton}
+              />
+            ) : (
+              <Button
+                label="Resume"
+                variant="primary"
+                accessibilityHint="Resumes the metronome"
+                onPress={togglePlayback}
+                style={styles.footerButton}
+              />
+            )}
+            <Button
+              label="Stop"
+              variant="stop"
+              accessibilityLabel="Stop metronome"
+              onPress={stopMetronome}
+              style={styles.footerButton}
+            />
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -114,5 +139,6 @@ const styles = StyleSheet.create({
   beatButtons: { flexDirection: "row", gap: 10, justifyContent: "center" },
   error: { color: colors.danger, fontSize: 14 },
   footer: { padding: spacing.lg, paddingTop: spacing.sm },
-  playButton: { minHeight: 64 },
+  footerRow: { flexDirection: "row", gap: 12 },
+  footerButton: { flex: 1, minHeight: 64 },
 });

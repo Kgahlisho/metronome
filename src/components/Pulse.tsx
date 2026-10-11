@@ -1,14 +1,34 @@
 import { useEffect, useRef } from "react";
-import { AccessibilityInfo, Animated, Easing, StyleSheet } from "react-native";
+import {
+  AccessibilityInfo,
+  Animated,
+  Easing,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 import { usePlayback } from "../audio/engine";
 import { colors } from "../lib/theme";
+import { expandOverlay, registerPulse } from "../store/overlay";
 
-/** Visual beat pulse. Skips the animation when the user prefers reduced motion. */
+/**
+ * Beat circle on the home screen. While playing it pulses on each beat, and
+ * tapping it opens the full-screen beat view, which grows from this circle.
+ * Skips the animation when the user prefers reduced motion.
+ */
 export function Pulse() {
   const beat = usePlayback((s) => s.beat);
   const accent = usePlayback((s) => s.accent);
+  const running = usePlayback((s) => s.state === "running");
   const scale = useRef(new Animated.Value(1)).current;
   const reduceMotion = useRef(false);
+  const holder = useRef<View>(null);
+
+  // Let the overlay find this circle's position on screen.
+  useEffect(() => {
+    registerPulse(holder);
+    return () => registerPulse(null);
+  }, []);
 
   useEffect(() => {
     AccessibilityInfo.isReduceMotionEnabled().then((v) => {
@@ -42,18 +62,30 @@ export function Pulse() {
         : colors.muted;
 
   return (
-    <Animated.View
-      accessible={false}
-      importantForAccessibility="no-hide-descendants"
-      style={[
-        styles.dot,
-        { backgroundColor: beat < 0 ? colors.surfaceRaised : tone },
-        { transform: [{ scale }] },
-      ]}
-    />
+    // collapsable={false} keeps this view in the native tree so it can be measured.
+    <View ref={holder} collapsable={false} style={styles.holder}>
+      <Pressable
+        disabled={!running}
+        onPress={expandOverlay}
+        accessible={running}
+        importantForAccessibility={running ? "yes" : "no-hide-descendants"}
+        accessibilityRole="button"
+        accessibilityLabel="Beat indicator"
+        accessibilityHint="Opens the full-screen beat view"
+      >
+        <Animated.View
+          style={[
+            styles.dot,
+            { backgroundColor: beat < 0 ? colors.surfaceRaised : tone },
+            { transform: [{ scale }] },
+          ]}
+        />
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  holder: { width: 96, height: 96 },
   dot: { width: 96, height: 96, borderRadius: 48 },
 });

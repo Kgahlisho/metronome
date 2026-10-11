@@ -7,7 +7,8 @@ type Props = {
   /** Spoken label; defaults to `label`. */
   accessibilityLabel?: string;
   accessibilityHint?: string;
-  variant?: "primary" | "secondary" | "danger";
+  /** `stop` is a solid red button for stopping playback. */
+  variant?: "primary" | "secondary" | "danger" | "stop";
   disabled?: boolean;
   style?: ViewStyle;
 };
@@ -33,6 +34,7 @@ export function Button({
         styles.base,
         variant === "primary" && styles.primary,
         variant === "danger" && styles.danger,
+        variant === "stop" && styles.stop,
         pressed && styles.pressed,
         disabled && styles.disabled,
         style,
@@ -61,6 +63,7 @@ const styles = StyleSheet.create({
   },
   primary: { backgroundColor: colors.accent, borderColor: colors.accent },
   danger: { borderColor: colors.danger },
+  stop: { backgroundColor: "#C62D32", borderColor: "#C62D32" },
   pressed: { opacity: 0.75 },
   disabled: { opacity: 0.4 },
   label: { color: colors.text, fontSize: 16, fontWeight: "600" },
