@@ -39,7 +39,7 @@ npx expo run:android      # or: npx expo run:ios
 The first run generates `android/` / `ios/` (prebuild), compiles the native app and installs it on a device or emulator. After that, day-to-day work is:
 
 ```sh
-npm start                 # starts Metro for the dev build
+npm start --dev--client ---tunnel               # starts Metro for the dev build
 ```
 
 Use `npm run typecheck` to type-check. If you don't have Android Studio or Xcode, you can build in the cloud with EAS: `npx eas-cli@latest build --profile development --platform android`.
